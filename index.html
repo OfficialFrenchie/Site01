@@ -11,35 +11,41 @@
       padding: 0;
       margin: 0;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
+      height: 100vh;
+      flex-direction: column;
     }
     #logo {
-      margin: 20px 0 10px 0;
-      width: 100px;
+      margin-bottom: 10px;
+      max-height: 100px;
     }
     #terminal-container {
       width: 90%;
-      max-width: 800px;
+      max-width: 900px;
       background: #000;
       padding: 20px;
       border: 2px solid #00FF00;
-      height: 80vh;
+      height: 70vh;
       overflow-y: auto;
       white-space: pre-wrap;
+      position: relative;
     }
     #terminal {
       width: 100%;
+      min-height: 100%;
     }
     #input {
-      width: 90%;
+      width: 100%;
       background: black;
       color: #00FF00;
       border: none;
       font-family: 'Courier New', Courier, monospace;
       font-size: 16px;
       outline: none;
-      margin-top: 10px;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
     }
     .error {
       color: red;
@@ -50,20 +56,28 @@
   </style>
 </head>
 <body>
-  <img id="logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/SCP_Foundation_Logo.svg/1200px-SCP_Foundation_Logo.svg.png" alt="SCP Logo">
+  <img id="logo" src="https://pa1.aminoapps.com/7065/e3ecb32225ee751850fcc8141f12b919485dbe58r1-640-360_hq.gif" alt="SCP Logo">
   
   <div id="terminal-container">
-    <div id="terminal">Welcome to the SCP Foundation Terminal.<br>Enter Access Code:</div>
+    <div id="terminal"></div>
+    <input type="text" id="input" autofocus autocomplete="off" style="display: none;">
   </div>
-  <input type="text" id="input" autofocus autocomplete="off">
 
   <script>
     const terminal = document.getElementById('terminal');
     const terminalContainer = document.getElementById('terminal-container');
     const input = document.getElementById('input');
 
-    let step = 'login';  // 'login', 'clearance', 'active'
+    let step = 'booting'; // 'booting', 'login', 'clearance', 'active'
     let clearanceLevel = 0;
+    let bootSteps = [
+      'Initializing Secure Connection...',
+      'Authenticating...',
+      'Loading Clearance Systems...',
+      'Establishing Database Access...',
+      'Access Terminal Ready.\n\nWelcome to the SCP Foundation Terminal.\nEnter Access Code:'
+    ];
+    let currentBootStep = 0;
 
     const scps = {
       0: ['SCP-000 Placeholder'],
@@ -86,6 +100,18 @@
       }
       terminal.appendChild(span);
       terminalContainer.scrollTop = terminalContainer.scrollHeight;
+    }
+
+    function bootTerminal() {
+      if (currentBootStep < bootSteps.length) {
+        printToTerminal(bootSteps[currentBootStep]);
+        currentBootStep++;
+        setTimeout(bootTerminal, 1000);
+      } else {
+        step = 'login';
+        input.style.display = 'block';
+        input.focus();
+      }
     }
 
     input.addEventListener('keydown', function(event) {
@@ -196,6 +222,9 @@
         `Name:\nPosition:\nClearance Level: (0–5 or Omni)\nDepartment:\nAssigned Site:\nBackground Information:\n\nNotes:`
       );
     }
+
+    // Start boot
+    bootTerminal();
   </script>
 </body>
 </html>
