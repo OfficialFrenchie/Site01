@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SCP Terminal Access</title>
+  <style>
+    body {
+      background-color: black;
+      color: #00FF00;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 20px;
+    }
+    #terminal {
+      white-space: pre-wrap;
+      overflow-y: auto;
+      height: 90vh;
+    }
+    #input {
+      width: 100%;
+      background: black;
+      color: #00FF00;
+      border: none;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal">Welcome to the SCP Foundation Terminal.\nEnter Access Code:</div>
+  <input type="text" id="input" autofocus>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('input');
+
+    let loggedIn = false;
+
+    function printToTerminal(text) {
+      terminal.textContent += '\n' + text;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    input.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const command = input.value.trim();
+        input.value = '';
+
+        if (!loggedIn) {
+          if (command === 'Site01') {
+            loggedIn = true;
+            printToTerminal('Access Granted.\nType "help" for available commands.');
+          } else {
+            printToTerminal('Access Denied. Try Again:');
+          }
+        } else {
+          handleCommand(command);
+        }
+      }
+    });
+
+    function handleCommand(command) {
+      switch (command.toLowerCase()) {
+        case 'help':
+          printToTerminal('Available Commands:\n- personnel\n- scp-file');
+          break;
+        case 'personnel':
+          printToTerminal('No personnel files loaded yet.');
+          break;
+        case 'scp-file':
+          printToTerminal('No SCP files loaded yet.');
+          break;
+        default:
+          printToTerminal('Unknown Command. Type "help" for available commands.');
+          break;
+      }
+    }
+  </script>
+</body>
+</html>
