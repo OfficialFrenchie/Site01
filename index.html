@@ -40,7 +40,6 @@
     let step = 'login';  // 'login', 'clearance', 'active'
     let clearanceLevel = 0;
 
-    // Example SCPs database based on level
     const scps = {
       0: ['SCP-000 Placeholder'],
       1: ['SCP-101', 'SCP-102'],
@@ -104,25 +103,18 @@
     }
 
     function handleCommand(command) {
-      switch (command.toLowerCase()) {
-        case 'help':
-          printToTerminal('Available Commands:<br>- personnel<br>- scp-file<br>- scp-list<br>- clearance');
-          break;
-        case 'personnel':
-          printToTerminal('Personnel Files Placeholder:<br>[NO FILES LOADED]');
-          break;
-        case 'scp-file':
-          printToTerminal('SCP Files Placeholder:<br>[NO FILES LOADED]');
-          break;
-        case 'scp-list':
-          showSCPList();
-          break;
-        case 'clearance':
-          printToTerminal(`Current Clearance Level: ${clearanceLevel.toString().toUpperCase()}`);
-          break;
-        default:
-          printToTerminal('Unknown Command. Type "help" for available commands.', true);
-          break;
+      if (command.toLowerCase() === 'help') {
+        printToTerminal('Available Commands:<br>- personnel<br>- scp-list<br>- clearance');
+      } else if (command.toLowerCase() === 'personnel') {
+        printToTerminal('Personnel Files Placeholder:<br>[NO FILES LOADED]');
+      } else if (command.toLowerCase() === 'scp-list') {
+        showSCPList();
+      } else if (command.toLowerCase() === 'clearance') {
+        printToTerminal(`Current Clearance Level: ${clearanceLevel.toString().toUpperCase()}`);
+      } else if (command.toLowerCase().startsWith('open-file-')) {
+        openSCPFile(command);
+      } else {
+        printToTerminal('Unknown Command. Type "help" for available commands.', true);
       }
     }
 
@@ -143,15 +135,33 @@
       if (availableScps.length > 0) {
         printToTerminal('Available SCP Files:');
         availableScps.forEach(file => printToTerminal('- ' + file));
+        printToTerminal('<br>To view a file, type: open-file-[SCP NUMBER]<br>Example: open-file-SCP-101');
       } else {
         printToTerminal('No SCP files available for your clearance level.', true);
       }
     }
-  </script>
-</body>
-</html>
 
+    function openSCPFile(command) {
+      const fileName = command.substring(10).toUpperCase(); // Get whatever after 'open-file-'
+      let availableScps = [];
 
+      if (clearanceLevel === 'omni') {
+        for (let level = 0; level <= 5; level++) {
+          availableScps = availableScps.concat(scps[level]);
+        }
+        availableScps = availableScps.concat(scps['omni']);
+      } else {
+        for (let level = 0; level <= clearanceLevel; level++) {
+          availableScps = availableScps.concat(scps[level]);
+        }
+      }
+
+      const found = availableScps.find(scp => scp.toUpperCase().startsWith(fileName));
+      if (found) {
+        printToTerminal(`Opening File: ${found}<br>[PLACEHOLDER FILE CONTENT]`);
+      } else {
+        printToTerminal('File not found or access denied.', true);
+      }
     }
   </script>
 </body>
