@@ -24,10 +24,13 @@
       font-size: 16px;
       outline: none;
     }
+    .error {
+      color: red;
+    }
   </style>
 </head>
 <body>
-  <div id="terminal">Welcome to the SCP Foundation Terminal.\nEnter Access Code:</div>
+  <div id="terminal">Welcome to the SCP Foundation Terminal.<br>Enter Access Code:</div>
   <input type="text" id="input" autofocus>
 
   <script>
@@ -35,9 +38,15 @@
     const input = document.getElementById('input');
 
     let loggedIn = false;
+    let clearanceLevel = null;
 
-    function printToTerminal(text) {
-      terminal.textContent += '\n' + text;
+    function printToTerminal(text, isError = false) {
+      const span = document.createElement('span');
+      span.innerHTML = text + '<br>';
+      if (isError) {
+        span.classList.add('error');
+      }
+      terminal.appendChild(span);
       terminal.scrollTop = terminal.scrollHeight;
     }
 
@@ -47,33 +56,62 @@
         input.value = '';
 
         if (!loggedIn) {
-          if (command === 'Site01') {
-            loggedIn = true;
-            printToTerminal('Access Granted.\nType "help" for available commands.');
-          } else {
-            printToTerminal('Access Denied. Try Again:');
-          }
+          checkLogin(command);
         } else {
           handleCommand(command);
         }
       }
     });
 
+    function checkLogin(command) {
+      switch (command) {
+        case 'Site01':
+          loggedIn = true;
+          clearanceLevel = 5;
+          printToTerminal('Access Granted. Clearance Level 5.');
+          printToTerminal('Type "help" for available commands.');
+          break;
+        case 'clearance-0':
+        case 'clearance-1':
+        case 'clearance-2':
+        case 'clearance-3':
+        case 'clearance-4':
+        case 'clearance-5':
+        case 'clearance-omni':
+          loggedIn = true;
+          clearanceLevel = command.split('-')[1];
+          printToTerminal(`Access Granted. Clearance Level ${clearanceLevel.toUpperCase()}.`);
+          printToTerminal('Type "help" for available commands.');
+          break;
+        default:
+          printToTerminal('Access Denied. Try Again:', true);
+          break;
+      }
+    }
+
     function handleCommand(command) {
       switch (command.toLowerCase()) {
         case 'help':
-          printToTerminal('Available Commands:\n- personnel\n- scp-file');
+          printToTerminal('Available Commands:<br>- personnel<br>- scp-file<br>- clearance');
           break;
         case 'personnel':
-          printToTerminal('No personnel files loaded yet.');
+          printToTerminal('Personnel Files Placeholder:<br>[NO FILES LOADED]');
           break;
         case 'scp-file':
-          printToTerminal('No SCP files loaded yet.');
+          printToTerminal('SCP Files Placeholder:<br>[NO FILES LOADED]');
+          break;
+        case 'clearance':
+          printToTerminal(`Your Clearance Level is: ${clearanceLevel.toUpperCase()}`);
           break;
         default:
-          printToTerminal('Unknown Command. Type "help" for available commands.');
+          printToTerminal('Unknown Command. Type "help" for available commands.', true);
           break;
       }
+    }
+  </script>
+</body>
+</html>
+
     }
   </script>
 </body>
