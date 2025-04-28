@@ -41,10 +41,18 @@
       margin: 0 auto;
       border: 2px solid white;
       padding: 20px;
-      overflow-y: auto;
+      overflow: hidden;
       background-color: rgba(0, 0, 0, 0.7);
       position: relative;
       cursor: text;
+      display: flex;
+      flex-direction: column;
+    }
+    #output {
+      flex-grow: 1;
+      overflow-y: hidden;
+      display: flex;
+      flex-direction: column;
     }
     #input {
       width: 95%;
@@ -58,9 +66,12 @@
       bottom: 10px;
       left: 10px;
     }
-    .error { color: red; }
-    .info { color: white; }
-    .scp-file { color: lightgreen; }
+    .error {
+      color: red;
+    }
+    .info {
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -71,199 +82,153 @@
 
   <div id="terminal">
     <div id="output"></div>
-    <input id="input" autocomplete="off" autofocus style="display: none;">
+    <input id="input" autocomplete="off" autofocus>
   </div>
 
   <script>
     const output = document.getElementById('output');
     const input = document.getElementById('input');
-    const terminal = document.getElementById('terminal');
+    const MAX_LINES = 50; // Max lines before removing old ones
 
-    let step = 'booting';
-    let clearanceLevel = 0;
-    let bootMessages = [
-      'Establishing Secure Uplink...',
-      'Verifying Node Authenticity...',
-      'Source Detected: Anderson Robotics Subnet',
-      'Engaging SCP Foundation Protocol Layer...',
-      'Linking to Site-01 Terminal Core...',
-      'Loading Clearance Authentication Suite...',
-      'Systems Online.',
-      '---',
-      'Notice: Terminal system originally designed by Anderson Robotics under SCP Foundation Contract (Ref. AR-SCP/1976).',
-      'Unauthorized use punishable by termination of contract and/or immediate neutralization.',
-      '---',
-      'ENTER SITE ACCESS CODE:'
-    ];
-    let bootIndex = 0;
+    let stage = 'site-login';
+    let clearance = 0;
+
+    const keys = {
+      "site01-0": 0,
+      "site01-1": 1,
+      "site01-2": 2,
+      "site01-3": 3,
+      "site01-4": 4,
+      "site01-5": 5,
+      "site01-omni": 6
+    };
 
     const scpFiles = {
-      "SCP-173": { level: 1, text: "Item #: SCP-173\nObject Class: Euclid\nOrigin: Unknown\nDescription: Statue-like entity that moves when unobserved." },
-      "SCP-049": { level: 2, text: "Item #: SCP-049\nObject Class: Euclid\nOrigin: 15th Century Europe\nDescription: Humanoid resembling a plague doctor, capable of 'curing' individuals lethally." },
-      "SCP-682": { level: 4, text: "Item #: SCP-682\nObject Class: Keter\nOrigin: Unknown\nDescription: Highly intelligent, adaptable reptilian entity. Destruction considered top priority." }
+      "scp-000": { level: 0, text: "Item #: SCP-000\nObject Class: Neutralized\nDescription: Placeholder SCP." },
+      "scp-001": { level: 5, text: "Item #: SCP-001\nObject Class: Various\nDescription: Multiple proposals exist." },
+      "scp-173": { level: 1, text: "Item #: SCP-173\nObject Class: Euclid\nDescription: Statue-like creature that moves when not observed." },
+      "scp-049": { level: 2, text: "Item #: SCP-049\nObject Class: Euclid\nDescription: Humanoid entity resembling a plague doctor." },
+      "scp-682": { level: 4, text: "Item #: SCP-682\nObject Class: Keter\nDescription: Highly intelligent and dangerous reptile." },
+      "scp-096": { level: 3, text: "Item #: SCP-096\nObject Class: Euclid\nDescription: Shy humanoid that reacts violently when viewed." },
+      "scp-106": { level: 4, text: "Item #: SCP-106\nObject Class: Keter\nDescription: Corrosive humanoid entity known as 'The Old Man'." },
+      "scp-939": { level: 2, text: "Item #: SCP-939\nObject Class: Keter\nDescription: Predatory creatures that mimic human speech." }
     };
 
     const personnelFiles = {
-      "Dr.Smith": { level: 1, text: "Personnel File\nName: Dr. John Smith\nPosition: Researcher\nClearance Level: 1\nAssigned Site: Site-19\nBackground: Specializes in low-risk anomaly containment." },
-      "Dr.Jones": { level: 3, text: "Personnel File\nName: Dr. Alicia Jones\nPosition: Senior Researcher\nClearance Level: 3\nAssigned Site: Site-13\nBackground: Focus on Keter-class anomaly research and recovery operations." }
+      "smith": { level: 1, text: "Name: Smith\nRank: Researcher\nClearance Level: 1\nDepartment: Safe-Class Containment\nOrigin: Anderson Robotics\nSecurity Status: Active" },
+      "jones": { level: 3, text: "Name: Jones\nRank: Senior Researcher\nClearance Level: 3\nDepartment: Keter-Class Anomalies\nOrigin: Anderson Robotics\nSecurity Status: Active" },
+      "adams": { level: 4, text: "Name: Adams\nRank: Head of Site Security\nClearance Level: 4\nOrigin: Anderson Robotics\nSecurity Status: Active" }
     };
 
-    const combativeInfo = {
-      "mtf": `
-Mobile Task Force (MTF):
-Specialized units assigned to deal with specific threats or situations beyond the capabilities of normal field agents. 
-Often deployed for recontainment operations, high-threat engagement, and rapid anomaly recovery.
-      `,
-      "rrt": `
-Rapid Response Team (RRT):
-Fast-deployment units trained for immediate action during containment breaches or emergent anomaly events.
-Tasked with neutralization, evacuation, and site lockdown procedures.
-      `,
-      "ia": `
-Internal Affairs (IA):
-Responsible for monitoring personnel integrity, investigating security breaches, and handling internal threats to Foundation secrecy and stability.
-      `,
-      "sst": `
-Site Security Team (SST):
-On-site security forces maintaining daily security protocols, facility defense, and standard anomaly monitoring operations.
-      `
-    };
+    const cfInfo = `Combative Forces Available:
+- Mobile Task Force (MTF)
+- Rapid Response Team (RRT)
+- Internal Affairs (IA)
+- Site Security Team (SST)`;
 
-    function writeLine(text, isError = false, isSCP = false) {
+    function writeLine(text, isError = false) {
       const line = document.createElement('div');
-      line.innerHTML = text.replace(/\n/g, '<br>');
-      if (isError) line.classList.add('error');
-      else if (isSCP) line.classList.add('scp-file');
-      else line.classList.add('info');
+      line.innerText = text;
+      line.className = isError ? 'error' : 'info';
       output.appendChild(line);
-      output.scrollTop = output.scrollHeight;
-    }
-
-    function bootTerminal() {
-      if (bootIndex < bootMessages.length) {
-        writeLine(bootMessages[bootIndex]);
-        bootIndex++;
-        setTimeout(bootTerminal, 800);
-      } else {
-        step = 'site-login';
-        input.style.display = 'block';
-        input.focus();
+      if (output.children.length > MAX_LINES) {
+        output.removeChild(output.children[0]);
       }
+      output.scrollTop = output.scrollHeight;
     }
 
     input.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        const command = input.value.trim();
+        const command = input.value.trim().toLowerCase();
         input.value = '';
         handleCommand(command);
       }
     });
 
-    terminal.addEventListener('click', () => input.focus());
+    document.getElementById('terminal').addEventListener('click', () => input.focus());
 
     function handleCommand(command) {
-      const cmd = command.toLowerCase();
-
-      if (step === 'site-login') {
-        if (cmd === "site01") {
-          writeLine("Site01 Access Confirmed.\nEnter Clearance Code (lv1 - lv5 or lv-omni):");
-          step = 'clearance-login';
+      if (stage === 'site-login') {
+        if (command === "site01") {
+          writeLine("Site01 Access Confirmed.\nEnter Clearance Code (site01-# or site01-omni):");
+          stage = 'clearance-login';
         } else {
-          writeLine("ACCESS DENIED. INVALID SITE CODE.", true);
+          writeLine("ACCESS DENIED. Incorrect Site Code.", true);
         }
         return;
       }
 
-      if (step === 'clearance-login') {
-        if (cmd === 'lv1') clearanceLevel = 1;
-        else if (cmd === 'lv2') clearanceLevel = 2;
-        else if (cmd === 'lv3') clearanceLevel = 3;
-        else if (cmd === 'lv4') clearanceLevel = 4;
-        else if (cmd === 'lv5') clearanceLevel = 5;
-        else if (cmd === 'lv-omni') clearanceLevel = 6;
-        else {
-          writeLine("INVALID CLEARANCE CODE.", true);
-          return;
+      if (stage === 'clearance-login') {
+        if (keys[command]) {
+          clearance = keys[command];
+          writeLine("Clearance Granted. Level: " + clearance);
+          stage = 'command';
+          writeLine("Type 'help' to view available commands.");
+        } else {
+          writeLine("Invalid Clearance Key.", true);
         }
-        writeLine("Clearance Level Accepted: " + (clearanceLevel === 6 ? "OMNI" : "Level " + clearanceLevel));
-        writeLine('Type "help" for a list of available commands.');
-        step = 'command-mode';
         return;
       }
 
-      if (step === 'command-mode') {
-        processTerminalCommand(command);
-      }
-    }
-
-    function processTerminalCommand(command) {
-      const cmd = command.toLowerCase();
-      if (cmd === 'help') {
-        writeLine('Commands: help | scp-list | personnel-list | cb-info | open-file-[filename] | logout');
-      } else if (cmd === 'scp-list') {
-        listFiles('scp');
-      } else if (cmd === 'personnel-list') {
-        listFiles('personnel');
-      } else if (cmd === 'cb-info') {
-        writeLine('Available Units: cb-info-mtf | cb-info-rrt | cb-info-ia | cb-info-sst');
-      } else if (cmd.startsWith('cb-info-')) {
-        const unit = cmd.split('-')[2];
-        if (combativeInfo[unit]) {
-          writeLine(combativeInfo[unit]);
+      if (stage === 'command') {
+        if (command === 'help') {
+          writeLine("Available Commands: help, scp-list, personnel-list, cf-info, open-file-[filename], logout");
+        } else if (command === 'scp-list') {
+          listFiles('scp');
+        } else if (command === 'personnel-list') {
+          listFiles('personnel');
+        } else if (command === 'cf-info') {
+          writeLine(cfInfo);
+        } else if (command.startsWith('open-file-')) {
+          openFile(command.substring(10));
+        } else if (command === 'logout') {
+          clearance = 0;
+          stage = 'site-login';
+          writeLine("Logged out. Enter Site Code:");
         } else {
-          writeLine('UNKNOWN COMBATIVE UNIT.', true);
+          writeLine("Unknown Command.", true);
         }
-      } else if (cmd.startsWith('open-file-')) {
-        openFile(cmd.substring(10));
-      } else if (cmd === 'logout') {
-        clearanceLevel = 0;
-        step = 'site-login';
-        writeLine('Logged out. ENTER SITE ACCESS CODE:');
-      } else {
-        writeLine('UNKNOWN COMMAND.', true);
       }
     }
 
     function listFiles(type) {
       if (type === 'scp') {
-        writeLine('Available SCP Files:');
-        for (const file in scpFiles) {
-          if (scpFiles[file].level <= clearanceLevel) {
-            writeLine('- ' + file, false, true);
+        writeLine("Available SCP Files:");
+        for (const key in scpFiles) {
+          if (scpFiles[key].level <= clearance) {
+            writeLine("- " + key.toUpperCase());
           }
         }
-        writeLine('Use "open-file-[SCP ID]" to view a file.');
+        writeLine("Use 'open-file-[SCP]' to view file.");
       } else if (type === 'personnel') {
-        writeLine('Available Personnel Files:');
-        for (const file in personnelFiles) {
-          if (personnelFiles[file].level <= clearanceLevel) {
-            writeLine('- ' + file);
+        writeLine("Available Personnel Files:");
+        for (const key in personnelFiles) {
+          if (personnelFiles[key].level <= clearance) {
+            writeLine("- " + key.charAt(0).toUpperCase() + key.slice(1));
           }
         }
-        writeLine('Use "open-file-[Personnel Name]" to view.');
+        writeLine("Use 'open-file-[Name]' to view file.");
       }
     }
 
-    function openFile(fileName) {
-      fileName = fileName.replace(/\s+/g, '');
-      if (scpFiles[fileName]) {
-        if (scpFiles[fileName].level <= clearanceLevel) {
-          writeLine(scpFiles[fileName].text);
+    function openFile(name) {
+      name = name.replace(/\./g, '').replace(/\s/g, '').toLowerCase();
+      if (scpFiles[name]) {
+        if (scpFiles[name].level <= clearance) {
+          writeLine(scpFiles[name].text);
         } else {
-          writeLine('INSUFFICIENT CLEARANCE.', true);
+          writeLine("Insufficient Clearance.", true);
         }
-      } else if (personnelFiles[fileName]) {
-        if (personnelFiles[fileName].level <= clearanceLevel) {
-          writeLine(personnelFiles[fileName].text);
+      } else if (personnelFiles[name]) {
+        if (personnelFiles[name].level <= clearance) {
+          writeLine(personnelFiles[name].text);
         } else {
-          writeLine('INSUFFICIENT CLEARANCE.', true);
+          writeLine("Insufficient Clearance.", true);
         }
       } else {
-        writeLine('FILE NOT FOUND.', true);
+        writeLine("File Not Found.", true);
       }
     }
-
-    bootTerminal();
   </script>
 </body>
 </html>
