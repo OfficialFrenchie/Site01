@@ -2,46 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SCP Foundation Terminal</title>
   <style>
     body {
-      background-color: black;
-      color: #00FF00;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 0;
       margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background-color: black;
+      color: white;
+      font-family: 'Courier New', Courier, monospace;
+      overflow: hidden;
       height: 100vh;
-      flex-direction: column;
-    }
-    #logo {
-      margin-bottom: 10px;
-      max-height: 100px;
-    }
-    #terminal-container {
-      width: 90%;
-      max-width: 900px;
-      background: #000;
-      padding: 20px;
-      border: 2px solid #00FF00;
-      height: 70vh;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      position: relative;
     }
     #terminal {
-      width: 100%;
-      min-height: 100%;
+      width: 90%;
+      height: 80%;
+      margin: 50px auto 0;
+      border: 2px solid red;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: rgba(0, 0, 0, 0.8);
+      position: relative;
     }
     #input {
       width: 100%;
-      background: black;
-      color: #00FF00;
+      background: transparent;
       border: none;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 16px;
+      color: white;
+      font-family: inherit;
+      font-size: 1em;
       outline: none;
       position: absolute;
       bottom: 10px;
@@ -50,181 +38,159 @@
     .error {
       color: red;
     }
-    .scp-file {
-      color: white;
+    img {
+      display: block;
+      margin: 20px auto 20px;
+      width: 80px;
+      height: auto;
+      filter: drop-shadow(0 0 5px red);
     }
   </style>
 </head>
 <body>
-  <img id="logo" src="https://pa1.aminoapps.com/7065/e3ecb32225ee751850fcc8141f12b919485dbe58r1-640-360_hq.gif" alt="SCP Logo">
-  
-  <div id="terminal-container">
-    <div id="terminal"></div>
-    <input type="text" id="input" autofocus autocomplete="off" style="display: none;">
+  <img src="https://pa1.aminoapps.com/7065/e3ecb32225ee751850fcc8141f12b919485dbe58r1-640-360_hq.gif" alt="SCP Logo">
+  <div id="terminal">
+    <div id="output"></div>
+    <input id="input" autocomplete="off" autofocus>
   </div>
 
   <script>
-    const terminal = document.getElementById('terminal');
-    const terminalContainer = document.getElementById('terminal-container');
+    const output = document.getElementById('output');
     const input = document.getElementById('input');
 
-    let step = 'booting'; // 'booting', 'login', 'clearance', 'active'
-    let clearanceLevel = 0;
-    let bootSteps = [
-      'Initializing Secure Connection...',
-      'Authenticating...',
-      'Loading Clearance Systems...',
-      'Establishing Database Access...',
-      'Access Terminal Ready.\n\nWelcome to the SCP Foundation Terminal.\nEnter Access Code:'
-    ];
-    let currentBootStep = 0;
+    let stage = 'booting';
+    let clearance = 0;
 
-    const scps = {
-      0: ['SCP-000 Placeholder'],
-      1: ['SCP-101', 'SCP-102'],
-      2: ['SCP-201', 'SCP-202'],
-      3: ['SCP-301', 'SCP-302'],
-      4: ['SCP-401', 'SCP-402'],
-      5: ['SCP-501', 'SCP-502'],
-      omni: ['SCP-001 [Top Secret]', 'SCP-9999 [Experimental]']
+    const scpFiles = {
+      "SCP-173": {level: 1, text: "SCP-173 File Placeholder: Containment Procedures and Description..."},
+      "SCP-049": {level: 2, text: "SCP-049 File Placeholder: The Plague Doctor..."},
+      "SCP-682": {level: 4, text: "SCP-682 File Placeholder: Hard to Destroy Reptile..."}
     };
 
-    function printToTerminal(text, isError = false, isSCP = false) {
-      const span = document.createElement('span');
-      span.innerHTML = text + '<br>';
-      if (isError) {
-        span.classList.add('error');
-      }
-      if (isSCP) {
-        span.classList.add('scp-file');
-      }
-      terminal.appendChild(span);
-      terminalContainer.scrollTop = terminalContainer.scrollHeight;
-    }
+    const personnelFiles = {
+      "Dr.Smith": {level: 1, text: `Name: Dr. Smith\nRank: Researcher\nFile Access Level: 1\nDanger Level: Safe\nDate of Test: 04/26/2025\nOther Researchers: Dr. Brown\nGoal of the test: Observe SCP-173 behavior\nDescription: Testing SCP-173 speed while unobserved\nOutcome: SCP-173 showed increased hostility.`}
+    };
 
-    function bootTerminal() {
-      if (currentBootStep < bootSteps.length) {
-        printToTerminal(bootSteps[currentBootStep]);
-        currentBootStep++;
-        setTimeout(bootTerminal, 1000);
+    const cfInfo = `Combative Force Info:\n- MTF Epsilon-11 ("Nine-Tailed Fox")\n- Rapid Response Team (RRT)\n- Internal Affairs (IA)`;
+
+    const keys = {
+      "SITE01-0": 0,
+      "SITE01-1": 1,
+      "SITE01-2": 2,
+      "SITE01-3": 3,
+      "SITE01-4": 4,
+      "SITE01-5": 5,
+      "SITE01-OMNI": 6
+    };
+
+    const bootMessages = [
+      "Initializing Secure Connection...",
+      "Authenticating...",
+      "Loading Clearance Systems...",
+      "Establishing Database Access...",
+      "Access Terminal Ready.\n\nWelcome to the SCP Foundation Terminal.\nEnter Access Code:"
+    ];
+
+    let bootIndex = 0;
+
+    function bootSequence() {
+      if (bootIndex < bootMessages.length) {
+        writeLine(bootMessages[bootIndex]);
+        bootIndex++;
+        setTimeout(bootSequence, 800);
       } else {
-        step = 'login';
-        input.style.display = 'block';
-        input.focus();
+        stage = 'login';
       }
     }
 
-    input.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
+    bootSequence();
+
+    function writeLine(text, isError = false) {
+      const line = document.createElement('div');
+      line.innerText = text;
+      if (isError) line.classList.add('error');
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
         const command = input.value.trim();
         input.value = '';
-        handleCommandFlow(command);
+        handleCommand(command);
       }
     });
 
-    function handleCommandFlow(command) {
-      if (step === 'login') {
-        handleLogin(command);
-      } else if (step === 'clearance') {
-        handleClearance(command);
-      } else if (step === 'active') {
-        handleTerminalCommand(command);
+    function handleCommand(command) {
+      if (stage === 'login') {
+        if (keys[command]) {
+          clearance = keys[command];
+          writeLine("Access Granted. Clearance Level: " + clearance);
+          stage = 'command';
+        } else {
+          writeLine("ACCESS DENIED.", true);
+        }
+        return;
+      }
+
+      if (stage === 'command') {
+        if (command.toLowerCase() === 'scp-list') {
+          listFiles('scp');
+        } else if (command.toLowerCase() === 'personnel-list') {
+          listFiles('personnel');
+        } else if (command.toLowerCase().startsWith('open-file-')) {
+          openFile(command.substring(10));
+        } else if (command.toLowerCase() === 'cf-info') {
+          writeLine(cfInfo);
+        } else if (command.toLowerCase() === 'logout') {
+          clearance = 0;
+          stage = 'login';
+          writeLine("Logged out. Enter new Access Code:");
+        } else {
+          writeLine("Unknown Command.", true);
+        }
       }
     }
 
-    function handleLogin(command) {
-      if (command === 'Site01') {
-        printToTerminal('Access Granted. Please enter your Clearance Code (lv0 - lv5, lv-omni):');
-        step = 'clearance';
+    function listFiles(type) {
+      if (type === 'scp') {
+        writeLine("SCP Files:");
+        for (const key in scpFiles) {
+          if (scpFiles[key].level <= clearance) {
+            writeLine("- " + key);
+          }
+        }
+        writeLine("Use 'open-file-[SCP]' to view.");
+      } else if (type === 'personnel') {
+        writeLine("Personnel Files:");
+        for (const key in personnelFiles) {
+          if (personnelFiles[key].level <= clearance) {
+            writeLine("- " + key);
+          }
+        }
+        writeLine("Use 'open-file-[Personnel]' to view.");
+      }
+    }
+
+    function openFile(name) {
+      if (scpFiles[name]) {
+        if (scpFiles[name].level <= clearance) {
+          writeLine(scpFiles[name].text);
+        } else {
+          writeLine("Insufficient Clearance.", true);
+        }
+      } else if (personnelFiles[name]) {
+        if (personnelFiles[name].level <= clearance) {
+          writeLine(personnelFiles[name].text);
+        } else {
+          writeLine("Insufficient Clearance.", true);
+        }
       } else {
-        printToTerminal('Access Denied. Try Again:', true);
+        writeLine("File Not Found.", true);
       }
     }
 
-    function handleClearance(command) {
-      switch (command.toLowerCase()) {
-        case 'lv0': clearanceLevel = 0; break;
-        case 'lv1': clearanceLevel = 1; break;
-        case 'lv2': clearanceLevel = 2; break;
-        case 'lv3': clearanceLevel = 3; break;
-        case 'lv4': clearanceLevel = 4; break;
-        case 'lv5': clearanceLevel = 5; break;
-        case 'lv-omni': clearanceLevel = 'omni'; break;
-        default:
-          printToTerminal('Invalid Clearance Code. Try Again:', true);
-          return;
-      }
-      printToTerminal(`Clearance Level Set: ${command.toUpperCase()}`);
-      printToTerminal('Type "help" for available commands.');
-      step = 'active';
-    }
-
-    function handleTerminalCommand(command) {
-      const lower = command.toLowerCase();
-      if (lower === 'help') {
-        printToTerminal('Available Commands:<br>- personnel<br>- scp-list<br>- clearance');
-      } else if (lower === 'personnel') {
-        showPersonnelPlaceholder();
-      } else if (lower === 'scp-list') {
-        listSCPs();
-      } else if (lower === 'clearance') {
-        printToTerminal(`Current Clearance Level: ${clearanceLevel.toString().toUpperCase()}`);
-      } else if (lower.startsWith('open-file-')) {
-        openSCPFile(lower);
-      } else {
-        printToTerminal('Unknown Command. Type "help" for available commands.', true);
-      }
-    }
-
-    function listSCPs() {
-      let available = [];
-      if (clearanceLevel === 'omni') {
-        for (let lvl = 0; lvl <= 5; lvl++) available = available.concat(scps[lvl]);
-        available = available.concat(scps['omni']);
-      } else {
-        for (let lvl = 0; lvl <= clearanceLevel; lvl++) available = available.concat(scps[lvl]);
-      }
-
-      if (available.length) {
-        printToTerminal('Available SCP Files:');
-        available.forEach(file => printToTerminal('- ' + file, false, true));
-        printToTerminal('<br>To view a file, type: open-file-[SCP NUMBER]<br>Example: open-file-SCP-101');
-      } else {
-        printToTerminal('No SCP files available for your clearance level.', true);
-      }
-    }
-
-    function openSCPFile(command) {
-      const target = command.substring(10).toUpperCase();
-      let available = [];
-
-      if (clearanceLevel === 'omni') {
-        for (let lvl = 0; lvl <= 5; lvl++) available = available.concat(scps[lvl]);
-        available = available.concat(scps['omni']);
-      } else {
-        for (let lvl = 0; lvl <= clearanceLevel; lvl++) available = available.concat(scps[lvl]);
-      }
-
-      const found = available.find(scp => scp.toUpperCase().startsWith(target));
-      if (found) {
-        printToTerminal(`Opening File: ${found}<br><br>` +
-          `Name of Researcher:\nRank:\nFile Access Level: (0–5 or Omni)\n` +
-          `Danger Classification: (Safe, Euclid, Keter, etc.)\nDate of Test:\nOther Researchers Involved:\n\n` +
-          `Goal of the Test:\n\nDescription of the Test:\n\nOutcome of the Test:`
-        );
-      } else {
-        printToTerminal('File not found or access denied.', true);
-      }
-    }
-
-    function showPersonnelPlaceholder() {
-      printToTerminal('Personnel File Placeholder:<br><br>' +
-        `Name:\nPosition:\nClearance Level: (0–5 or Omni)\nDepartment:\nAssigned Site:\nBackground Information:\n\nNotes:`
-      );
-    }
-
-    // Start boot
-    bootTerminal();
+    document.getElementById('terminal').addEventListener('click', () => input.focus());
   </script>
 </body>
 </html>
