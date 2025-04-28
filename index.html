@@ -189,12 +189,12 @@
 
       if (stage === 'command') {
         if (command === 'help') {
-          writeLine("Available Commands: help, scp-list, personnel-list, cf-info-mtf, cf-info-rrt, cf-info-ia, cf-info-sst, logout");
+          writeLine("Available Commands: help, scp-list, personnel-list, logout");
         } else if (command === 'scp-list') {
           listFiles('scp');
         } else if (command === 'personnel-list') {
           listFiles('personnel');
-        } else if (command.startsWith('cf-info-')) {
+        } else if (command.startsWith('cf-info')) {
           showCFInfo(command.substring(8));
         } else if (command === 'logout') {
           clearance = 0;
