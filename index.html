@@ -58,15 +58,9 @@
       bottom: 10px;
       left: 10px;
     }
-    .error {
-      color: red;
-    }
-    .info {
-      color: white;
-    }
-    .scp-file {
-      color: lightgreen;
-    }
+    .error { color: red; }
+    .info { color: white; }
+    .scp-file { color: lightgreen; }
   </style>
 </head>
 <body>
@@ -168,9 +162,11 @@ On-site security forces maintaining daily security protocols, facility defense, 
     terminal.addEventListener('click', () => input.focus());
 
     function handleCommand(command) {
+      const cmd = command.toLowerCase();
+
       if (step === 'site-login') {
-        if (command === "Site01") {
-          writeLine("Site01 Access Confirmed.\nEnter Clearance Code (SITE01-0 to SITE01-5 or SITE01-OMNI):");
+        if (cmd === "site01") {
+          writeLine("Site01 Access Confirmed.\nEnter Clearance Code (lv1 - lv5 or lv-omni):");
           step = 'clearance-login';
         } else {
           writeLine("ACCESS DENIED. INVALID SITE CODE.", true);
@@ -179,20 +175,19 @@ On-site security forces maintaining daily security protocols, facility defense, 
       }
 
       if (step === 'clearance-login') {
-        if (command.startsWith('SITE01-')) {
-          const lvl = command.split('-')[1];
-          if (lvl === 'OMNI') clearanceLevel = 6;
-          else if (!isNaN(lvl) && lvl >= 0 && lvl <= 5) clearanceLevel = parseInt(lvl);
-          else {
-            writeLine("INVALID CLEARANCE LEVEL.", true);
-            return;
-          }
-          writeLine("Clearance Level Accepted: Level " + (clearanceLevel === 6 ? 'OMNI' : clearanceLevel));
-          writeLine('Type "help" for a list of available commands.');
-          step = 'command-mode';
-        } else {
+        if (cmd === 'lv1') clearanceLevel = 1;
+        else if (cmd === 'lv2') clearanceLevel = 2;
+        else if (cmd === 'lv3') clearanceLevel = 3;
+        else if (cmd === 'lv4') clearanceLevel = 4;
+        else if (cmd === 'lv5') clearanceLevel = 5;
+        else if (cmd === 'lv-omni') clearanceLevel = 6;
+        else {
           writeLine("INVALID CLEARANCE CODE.", true);
+          return;
         }
+        writeLine("Clearance Level Accepted: " + (clearanceLevel === 6 ? "OMNI" : "Level " + clearanceLevel));
+        writeLine('Type "help" for a list of available commands.');
+        step = 'command-mode';
         return;
       }
 
@@ -268,7 +263,6 @@ On-site security forces maintaining daily security protocols, facility defense, 
       }
     }
 
-    // Boot Terminal
     bootTerminal();
   </script>
 </body>
