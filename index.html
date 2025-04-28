@@ -114,14 +114,26 @@
       "Dr.Jones": { level: 3, text: "Personnel File\nName: Dr. Alicia Jones\nPosition: Senior Researcher\nClearance Level: 3\nAssigned Site: Site-13\nBackground: Focus on Keter-class anomaly research and recovery operations." }
     };
 
-    const cfInfo = `
-Combative Forces Overview:
-- MTF (Mobile Task Force Units): Specialized rapid-response teams.
-- RRT (Rapid Response Team): Emergency anomaly containment squads.
-- IA (Internal Affairs): Handles internal security breaches and investigations.
-- SST (Site Security Team): Primary onsite defense personnel.
-Origin of Deployment: Anderson Robotics Systems Modified for SCP Operational Use.
-    `;
+    const combativeInfo = {
+      "mtf": `
+Mobile Task Force (MTF):
+Specialized units assigned to deal with specific threats or situations beyond the capabilities of normal field agents. 
+Often deployed for recontainment operations, high-threat engagement, and rapid anomaly recovery.
+      `,
+      "rrt": `
+Rapid Response Team (RRT):
+Fast-deployment units trained for immediate action during containment breaches or emergent anomaly events.
+Tasked with neutralization, evacuation, and site lockdown procedures.
+      `,
+      "ia": `
+Internal Affairs (IA):
+Responsible for monitoring personnel integrity, investigating security breaches, and handling internal threats to Foundation secrecy and stability.
+      `,
+      "sst": `
+Site Security Team (SST):
+On-site security forces maintaining daily security protocols, facility defense, and standard anomaly monitoring operations.
+      `
+    };
 
     function writeLine(text, isError = false, isSCP = false) {
       const line = document.createElement('div');
@@ -192,13 +204,20 @@ Origin of Deployment: Anderson Robotics Systems Modified for SCP Operational Use
     function processTerminalCommand(command) {
       const cmd = command.toLowerCase();
       if (cmd === 'help') {
-        writeLine('Commands: help | scp-list | personnel-list | cf-info | open-file-[filename] | logout');
+        writeLine('Commands: help | scp-list | personnel-list | cb-info | open-file-[filename] | logout');
       } else if (cmd === 'scp-list') {
         listFiles('scp');
       } else if (cmd === 'personnel-list') {
         listFiles('personnel');
-      } else if (cmd === 'cf-info') {
-        writeLine(cfInfo);
+      } else if (cmd === 'cb-info') {
+        writeLine('Available Units: cb-info-mtf | cb-info-rrt | cb-info-ia | cb-info-sst');
+      } else if (cmd.startsWith('cb-info-')) {
+        const unit = cmd.split('-')[2];
+        if (combativeInfo[unit]) {
+          writeLine(combativeInfo[unit]);
+        } else {
+          writeLine('UNKNOWN COMBATIVE UNIT.', true);
+        }
       } else if (cmd.startsWith('open-file-')) {
         openFile(cmd.substring(10));
       } else if (cmd === 'logout') {
