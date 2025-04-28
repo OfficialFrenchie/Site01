@@ -143,6 +143,17 @@
       output.scrollTop = output.scrollHeight;
     }
 
+    // Show boot-up message at the beginning
+    setTimeout(() => {
+      writeLine("Loading SCP Foundation Terminal...", false, true);
+      setTimeout(() => {
+        writeLine("Initializing Site01 system... please stand by.", false, true);
+        setTimeout(() => {
+          writeLine("System online. Please enter Site Code.", false);
+        }, 1000);
+      }, 1000);
+    }, 1000);
+
     input.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
         const command = input.value.trim().toLowerCase();
