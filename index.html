@@ -106,6 +106,14 @@
       omni: ['SCP-001 [Top Secret]', 'SCP-9999 [Experimental]']
     };
 
+    const combativeForcesInfo = `
+Combative Forces Units:
+- Mobile Task Force (MTF)
+- Rapid Response Team (RRT)
+- Internal Affairs (IA)
+- Site Security Team (SST)
+    `;
+
     function writeLine(text, isError = false, isSCP = false) {
       const line = document.createElement('div');
       line.innerHTML = text.replace(/\n/g, '<br>');
@@ -178,11 +186,13 @@
     function handleTerminalCommand(command) {
       const lower = command.toLowerCase();
       if (lower === 'help') {
-        writeLine('Available Commands:<br>- personnel<br>- scp-list<br>- clearance');
+        writeLine('Available Commands:<br>- personnel<br>- scp-list<br>- cf-info<br>- clearance');
       } else if (lower === 'personnel') {
         showPersonnelPlaceholder();
       } else if (lower === 'scp-list') {
         listSCPs();
+      } else if (lower === 'cf-info') {
+        writeLine(combativeForcesInfo);
       } else if (lower === 'clearance') {
         writeLine(`Current Clearance Level: ${clearanceLevel.toString().toUpperCase()}`);
       } else if (lower.startsWith('open-file-')) {
