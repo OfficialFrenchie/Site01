@@ -37,7 +37,7 @@
     }
     #terminal {
       width: 90%;
-      height: 80%;
+      height: 70%; /* Reduced terminal height */
       margin: 0 auto;
       border: 2px solid white;
       padding: 20px;
@@ -71,6 +71,9 @@
     }
     .info {
       color: white;
+    }
+    .loading {
+      color: green; /* Loading messages in green */
     }
   </style>
 </head>
@@ -114,26 +117,30 @@
     };
 
     const personnelFiles = {
-      "smith": { level: 1, text: "Name: Smith\nRank: Researcher\nClearance Level: 1\nDepartment: Safe-Class Containment\nOrigin: Anderson Robotics\nSecurity Status: Active" },
-      "jones": { level: 3, text: "Name: Jones\nRank: Senior Researcher\nClearance Level: 3\nDepartment: Keter-Class Anomalies\nOrigin: Anderson Robotics\nSecurity Status: Active" },
-      "adams": { level: 4, text: "Name: Adams\nRank: Head of Site Security\nClearance Level: 4\nOrigin: Anderson Robotics\nSecurity Status: Active" }
+      "smith": { level: 1, text: "Name: Smith\nRank: Researcher\nClearance Level: 1\nDepartment: Safe-Class Containment\nDate of Employment: 2014\nSecurity Status: Active" },
+      "jones": { level: 3, text: "Name: Jones\nRank: Senior Researcher\nClearance Level: 3\nDepartment: Keter-Class Anomalies\nDate of Employment: 2009\nSecurity Status: Active" }
     };
 
-    const cfInfo = `Combative Forces Available:
-- Mobile Task Force (MTF)
-- Rapid Response Team (RRT)
-- Internal Affairs (IA)
-- Site Security Team (SST)`;
+    const cfInfo = {
+      "mtf": "Mobile Task Force (MTF): Elite tactical teams responding to high-threat scenarios.",
+      "rrt": "Rapid Response Team (RRT): Immediate intervention force for on-site containment breaches.",
+      "ia": "Internal Affairs (IA): Responsible for investigating personnel misconduct and site security.",
+      "sst": "Site Security Team (SST): Ensures site perimeter and internal security."
+    };
 
-    function writeLine(text, isError = false) {
+    function writeLine(text, isError = false, isLoading = false) {
       const line = document.createElement('div');
       line.innerText = text;
-      line.className = isError ? 'error' : 'info';
+      if (isError) line.classList.add('error');
+      else if (isLoading) line.classList.add('loading');
+      else line.classList.add('info');
       output.appendChild(line);
-      
+
       if (output.children.length > MAX_LINES) {
-        output.removeChild(output.children[0]); // Remove the oldest line when it exceeds the max
+        output.removeChild(output.firstChild); // Remove top message when overflow occurs
       }
+
+      output.scrollTop = output.scrollHeight;
     }
 
     input.addEventListener('keydown', function(e) {
@@ -149,7 +156,7 @@
     function handleCommand(command) {
       if (stage === 'site-login') {
         if (command === "site01") {
-          writeLine("Site Access Confirmed. Enter Clearance Level (lv1 to lv5, or lv-omni):");
+          writeLine("Site01 Access Confirmed.\nEnter Clearance Code (lv1-5 or lv-omni):");
           stage = 'clearance-login';
         } else {
           writeLine("ACCESS DENIED. Incorrect Site Code.", true);
@@ -158,28 +165,26 @@
       }
 
       if (stage === 'clearance-login') {
-        if (clearanceKeys[command] !== undefined) {
+        if (clearanceKeys[command]) {
           clearance = clearanceKeys[command];
-          writeLine(`Clearance Granted. Level: ${clearance}`);
+          writeLine("Clearance Granted. Level: " + clearance);
           stage = 'command';
           writeLine("Type 'help' to view available commands.");
         } else {
-          writeLine("Invalid Clearance Level Key.", true);
+          writeLine("Invalid Clearance Key.", true);
         }
         return;
       }
 
       if (stage === 'command') {
         if (command === 'help') {
-          writeLine("Available Commands: help, scp-list, personnel-list, cf-info, open-file-[filename], logout");
+          writeLine("Available Commands: help, scp-list, personnel-list, cf-info-mtf, cf-info-rrt, cf-info-ia, cf-info-sst, logout");
         } else if (command === 'scp-list') {
           listFiles('scp');
         } else if (command === 'personnel-list') {
           listFiles('personnel');
-        } else if (command === 'cf-info') {
-          writeLine(cfInfo);
-        } else if (command.startsWith('open-file-')) {
-          openFile(command.substring(10));
+        } else if (command.startsWith('cf-info-')) {
+          showCFInfo(command.substring(8));
         } else if (command === 'logout') {
           clearance = 0;
           stage = 'site-login';
@@ -195,10 +200,10 @@
         writeLine("Available SCP Files:");
         for (const key in scpFiles) {
           if (scpFiles[key].level <= clearance) {
-            writeLine("- " + key.toUpperCase());
+            writeLine("- " + key);
           }
         }
-        writeLine("Use 'open-file-[SCP]' to view file.");
+        writeLine("Use the file name to view file.");
       } else if (type === 'personnel') {
         writeLine("Available Personnel Files:");
         for (const key in personnelFiles) {
@@ -206,39 +211,17 @@
             writeLine("- " + key.charAt(0).toUpperCase() + key.slice(1));
           }
         }
-        writeLine("Use 'open-file-[Name]' to view file.");
+        writeLine("Use the file name to view file.");
       }
     }
 
-    function openFile(name) {
-      name = name.replace(/\./g, '').replace(/\s/g, '').toLowerCase();
-      if (scpFiles[name]) {
-        if (scpFiles[name].level <= clearance) {
-          writeLine(scpFiles[name].text);
-        } else {
-          writeLine("Insufficient Clearance.", true);
-        }
-      } else if (personnelFiles[name]) {
-        if (personnelFiles[name].level <= clearance) {
-          writeLine(personnelFiles[name].text);
-        } else {
-          writeLine("Insufficient Clearance.", true);
-        }
+    function showCFInfo(taskForce) {
+      if (cfInfo[taskForce]) {
+        writeLine(cfInfo[taskForce]);
       } else {
-        writeLine("File Not Found.", true);
+        writeLine("Unknown Task Force.", true);
       }
     }
-
-    function bootSequence() {
-      writeLine("Booting up SCP Foundation Terminal...");
-      setTimeout(() => writeLine("Initializing System..."), 1500);
-      setTimeout(() => writeLine("Loading Files..."), 3000);
-      setTimeout(() => writeLine("System Ready. Enter Site Code:"), 4500);
-    }
-
-    // Run boot sequence
-    bootSequence();
-
   </script>
 </body>
 </html>
