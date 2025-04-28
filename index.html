@@ -36,7 +36,7 @@
       min-height: 100%;
     }
     #input {
-      width: 100%;
+      width: 97%;
       background: black;
       color: #00FF00;
       border: none;
@@ -88,13 +88,6 @@
       5: ['SCP-501', 'SCP-502'],
       omni: ['SCP-001 [Top Secret]', 'SCP-9999 [Experimental]']
     };
-
-    const combativeForces = [
-      "Mobile Task Force (MTF)",
-      "Rapid Response Team (RRT)",
-      "Internal Affairs (IA)",
-      "Site Security Team (SST)"
-    ];
 
     function printToTerminal(text, isError = false, isSCP = false) {
       const span = document.createElement('span');
@@ -169,17 +162,13 @@
     function handleTerminalCommand(command) {
       const lower = command.toLowerCase();
       if (lower === 'help') {
-        printToTerminal('Available Commands:<br>- personnel<br>- scp-list<br>- cf-list<br>- clearance<br>- logout');
+        printToTerminal('Available Commands:<br>- personnel<br>- scp-list<br>- clearance');
       } else if (lower === 'personnel') {
         showPersonnelPlaceholder();
       } else if (lower === 'scp-list') {
         listSCPs();
-      } else if (lower === 'cf-list') {
-        listCombativeForces();
       } else if (lower === 'clearance') {
         printToTerminal(`Current Clearance Level: ${clearanceLevel.toString().toUpperCase()}`);
-      } else if (lower === 'logout') {
-        logout();
       } else if (lower.startsWith('open-file-')) {
         openSCPFile(lower);
       } else {
@@ -203,11 +192,6 @@
       } else {
         printToTerminal('No SCP files available for your clearance level.', true);
       }
-    }
-
-    function listCombativeForces() {
-      printToTerminal('Combative Forces List:');
-      combativeForces.forEach(force => printToTerminal('- ' + force));
     }
 
     function openSCPFile(command) {
@@ -239,16 +223,8 @@
       );
     }
 
-    function logout() {
-      printToTerminal('Logging out...');
-      clearanceLevel = 0;
-      step = 'login';
-      printToTerminal('Enter Access Code:');
-    }
-
     // Start boot
     bootTerminal();
   </script>
 </body>
 </html>
-
